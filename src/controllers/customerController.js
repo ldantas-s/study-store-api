@@ -6,12 +6,20 @@ import * as AuthService from '../services/authService.js';
 import { createEncryptValue } from '../utils.js';
 
 export const getAll = (req, res) => {
+  /* 
+  #swagger.tags = ['Customers']
+  #swagger.security = [{
+    "ApiKeyAuth": ''
+  }]
+  */
   RepositoryCustomer.getAll()
     .then((response) => res.status(200).json(response))
     .catch((error) => res.status(400).json({ error }));
 };
 
 export const create = (req, res) => {
+  // #swagger.tags = ['Customers']
+
   const contract = new ValidationContract();
 
   contract.hasMinLen(
@@ -48,6 +56,27 @@ export const create = (req, res) => {
 };
 
 export const login = (req, res) => {
+  /*
+  #swagger.tags = ['Authentication']
+  #swagger.requestBody = {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          "properties": {
+            "email": {
+              "example": "servo@contact.com"
+            },
+            "password": {
+              type: "string",
+              "example": "654321"
+            }
+          }
+        }  
+      },
+    }
+  } 
+  */
   RepositoryCustomer.authenticate({
     ...req.body,
     password: createEncryptValue(req.body.password),
@@ -74,6 +103,12 @@ export const login = (req, res) => {
 };
 
 export const refreshToken = async (req, res) => {
+  /*
+  #swagger.tags = ['Authentication']
+  #swagger.security = [{
+    "ApiKeyAuth": ''
+  }]
+  */
   const data = await AuthService.decodeToken(AuthService.getToken(req));
 
   RepositoryCustomer.getById(data.id)

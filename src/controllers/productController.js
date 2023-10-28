@@ -4,6 +4,7 @@ import { Product } from '../models/index.js';
 import { RepositoryProduct } from '../repositories/index.js';
 
 export const getAll = (req, res) => {
+  // #swagger.tags = ['Products']
   RepositoryProduct.get()
     .then((response) => {
       res.status(200).json(response);
@@ -16,24 +17,32 @@ export const getAll = (req, res) => {
 };
 
 export const getBySlug = (req, res) => {
+  // #swagger.tags = ['Products']
   RepositoryProduct.getBySlug(req.params.slug)
     .then((response) => res.status(200).json(response))
     .catch((error) => res.status(400).json({ error }));
 };
 
 export const getById = (req, res) => {
+  // #swagger.tags = ['Products']
   RepositoryProduct.getById(req.params.id)
     .then((response) => res.status(200).json(response))
     .catch((error) => res.status(400).json({ error }));
 };
 
 export const getByTag = (req, res) => {
+  // #swagger.tags = ['Products']
   RepositoryProduct.getByTag(req.params.tag)
     .then((response) => res.status(200).json(response))
     .catch((error) => res.status(400).json(error));
 };
 
 export const post = (req, res) => {
+  /*
+  #swagger.tags = ['Products']
+  #swagger.security = [{
+    "ApiKeyAuth": ''
+  }]*/
   const validation = new ValidationContract();
   validation.hasMinLen(
     req.body.title,
@@ -59,6 +68,11 @@ export const post = (req, res) => {
 };
 
 export const put = (req, res) => {
+  /*
+  #swagger.tags = ['Products']
+  #swagger.security = [{
+    "ApiKeyAuth": ''
+  }]*/
   RepositoryProduct.update(req.params.id, req.body)
     .then(() =>
       res.status(201).json({ message: 'Product updated with success!' })
@@ -69,6 +83,11 @@ export const put = (req, res) => {
 };
 
 export const del = (req, res) => {
+  /*
+  #swagger.tags = ['Products']
+  #swagger.security = [{
+    "ApiKeyAuth": ''
+  }]*/
   RepositoryProduct.remove(req.body.id)
     .then(() =>
       res.status(201).json({ message: 'Product removed with success!' })

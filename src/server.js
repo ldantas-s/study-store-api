@@ -4,15 +4,12 @@ import http from 'http';
 import Debug from 'debug';
 import express from 'express';
 import mongoose from 'mongoose';
+import swaggerUi from 'swagger-ui-express';
 
 import 'dotenv/config.js';
 
-import {
-  routes,
-  productRoutes,
-  customerRoutes,
-  orderRoutes,
-} from './routes/index.js';
+import SwaggerDocsv2 from './docs/swagger-output.json' assert { type: 'json' };
+import { routesV1 } from './routes/index.js';
 
 const debug = Debug('nodebalta:server');
 
@@ -21,6 +18,8 @@ const PORT = normalizePort(process.env.PORT);
 
 app.set('port', PORT);
 app.use(express.json());
+
+app.use('/v1/docs', swaggerUi.serve, swaggerUi.setup(SwaggerDocsv2));
 
 const server = http.createServer(app);
 
@@ -40,10 +39,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/', routes);
-app.use('/products', productRoutes);
-app.use('/customers', customerRoutes);
-app.use('/orders', orderRoutes);
+app.use('/v1', routesV1);
 
 server.listen(PORT, () =>
   console.log(`🚀 Server on. http://localhost:${PORT}.`)

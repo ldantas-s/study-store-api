@@ -1,5 +1,9 @@
 import express from 'express';
 
+import { productRoutes } from './productRoutes.js';
+import { customerRoutes } from './customerRoutes.js';
+import { orderRoutes } from './orderRoutes.js';
+
 const routes = express.Router();
 
 routes.get('/', (req, res) => {
@@ -8,9 +12,14 @@ routes.get('/', (req, res) => {
     version: '0.0.1',
   });
 });
+routes.get('/terms', (req, res) => {
+  res.status(200).send({
+    message: "Let's have fun!",
+  });
+});
 
-export { routes };
+routes.use('/products', productRoutes);
+routes.use('/customers', customerRoutes);
+routes.use('/orders', orderRoutes);
 
-export { productRoutes } from './productRoutes.js';
-export { customerRoutes } from './customerRoutes.js';
-export { orderRoutes } from './orderRoutes.js';
+export const routesV1 = routes;
