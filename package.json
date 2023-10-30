@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "build:docs": "node ./src/swagger.js",
-    "dev": "node --watch --no-warnings ./src/server.js",
-    "dev:warn": "node --trace-warnings ./src/server.js"
+    "dev": "yarn build:docs && node --watch --no-warnings ./src/module.js",
+    "dev:warn": "node --trace-warnings ./src/module.js",
+    "test": "NODE_ENV=test jest"
   },
   "dependencies": {
     "@getbrevo/brevo": "^1.0.1",
@@ -15,11 +15,17 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "http": "^0.0.1-security",
+    "jest": "^29.7.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.6.3",
     "swagger-ui-express": "^5.0.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.23.2",
+    "@babel/preset-env": "^7.23.2",
+    "@babel/register": "^7.22.15",
+    "babel-jest": "^29.7.0",
+    "supertest": "^6.3.3",
     "swagger-autogen": "^2.23.6"
   }
 }
