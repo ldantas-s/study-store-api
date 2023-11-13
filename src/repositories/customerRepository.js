@@ -1,4 +1,5 @@
 import { Customer } from '../models';
+import { NotFoundError } from '../utils/Errors/NotFoundError';
 
 export const getById = async (id) => {
   const customer = await Customer.findById(id, { username: 1, email: 1 });
@@ -21,7 +22,7 @@ export const authenticate = async (data) => {
     email: data.email,
     password: data.password,
   });
-  if (!customer) throw new Error('Customer not found!');
+  if (!customer) throw new NotFoundError('Email or password invalid');
   return customer;
 };
 

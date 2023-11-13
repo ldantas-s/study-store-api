@@ -115,5 +115,22 @@ test('should return an error when fail to make login', async () => {
     .send({ email: 'test@contact.com', password: '1234567' });
 
   expect(login.status).toBe(404);
+  expect(login.body.type).toBe('not_found');
+  expect(login.body.message).toBe('Email or password invalid');
 });
-test.todo('should return an error when fail to refresh the token');
+
+test('should return a restrict access error when does not exist a token to refresh', async () => {
+  const refreshToken = await requestApp.post('/v1/customers/refresh-token');
+
+  expect(refreshToken.status).toBe(401);
+  expect(refreshToken.body.message).toBe('Restrict Access!');
+});
+
+test('should return an invalid token when the token passed is invalid', async () => {
+  const refreshToken = await requestApp
+    .post('/v1/customers/refresh-token')
+    .set('x-access-token', 'bAs0S3DeH8h7koKow');
+
+  expect(refreshToken.status).toBe(401);
+  expect(refreshToken.body.message).toBe('Invalid Token');
+});

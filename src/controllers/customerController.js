@@ -3,9 +3,9 @@ import { ValidationContract } from '../validators/index.js';
 import { RepositoryCustomer } from '../repositories/index.js';
 import * as EmailService from '../services/emailService.js';
 import * as AuthService from '../services/authService.js';
-import { createEncryptValue } from '../utils.js';
+import { createEncryptValue } from '../utils/encryptValue.js';
 
-export const getCustomerData = async (req, res) => {
+export const getCustomerData = async (req, res, next) => {
   /* 
   #swagger.tags = ['Customers']
   #swagger.security = [{
@@ -13,12 +13,12 @@ export const getCustomerData = async (req, res) => {
   }]
   */
   try {
-    const dataToken = await AuthService.decodeToken(AuthService.getToken(req));
+    const dataToken = AuthService.decodeToken(AuthService.getToken(req));
     const customer = await RepositoryCustomer.getById(dataToken.id);
 
     res.status(200).json({ customer });
   } catch (error) {
-    res.status(400).json({ error });
+    next(error);
   }
 };
 
@@ -106,7 +106,7 @@ export const update = async (req, res) => {
   }
 };
 
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
   /*
   #swagger.tags = ['Authentication']
   #swagger.requestBody = {
@@ -134,7 +134,7 @@ export const login = async (req, res) => {
       password: createEncryptValue(req.body.password),
     });
 
-    const token = await AuthService.generateToken({
+    const token = AuthService.generateToken({
       id: customer._id,
       email: customer.email,
       name: customer.name,
@@ -146,24 +146,20 @@ export const login = async (req, res) => {
       data: { email: customer.email, username: customer.username },
     });
   } catch (error) {
-    res.status(400).json({ error });
+    next(error);
   }
 };
 
-export const refreshToken = async (req, res) => {
+export const refreshToken = async (req, res, next) => {
   /*
   #swagger.tags = ['Authentication']
   #swagger.security = [{
     "ApiKeyAuth": ''
   }]
   */
-  const data = await AuthService.decodeToken(AuthService.getToken(req));
   try {
+    const data = AuthService.decodeToken(AuthService.getToken(req));
     const customer = await RepositoryCustomer.getById(data.id);
-    if (!customer) {
-      res.status(404).json({ message: 'Invalid Token!' });
-      return;
-    }
 
     const token = await AuthService.generateToken({
       id: customer._id,
@@ -176,6 +172,6 @@ export const refreshToken = async (req, res) => {
       data: { email: customer.email, username: customer.username },
     });
   } catch (error) {
-    res.statu(400).json({ error });
+    next(error);
   }
 };
