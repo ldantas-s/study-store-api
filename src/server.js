@@ -3,7 +3,7 @@ import http from 'http';
 import Debug from 'debug';
 import mongoose from 'mongoose';
 
-import { onListening } from './utils.js';
+import { onListening } from './utils/onListening.js';
 
 import app from './app.js';
 

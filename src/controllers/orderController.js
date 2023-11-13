@@ -2,7 +2,7 @@ import { ValidationContract } from '../validators/index.js';
 
 import { Order } from '../models/index.js';
 import { RepositoryOrder } from '../repositories/index.js';
-import { randomID } from '../utils.js';
+import { randomID } from '../utils/encryptValue.js';
 import * as AuthService from '../services/authService.js';
 
 export const getAll = (req, res) =>
