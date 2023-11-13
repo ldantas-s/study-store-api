@@ -2,8 +2,7 @@ import { Customer } from '../models';
 
 export const getById = async (id) => {
   const customer = await Customer.findById(id, { username: 1, email: 1 });
-  if (!customer)
-    throw new Error('Customer not found!').;
+  if (!customer) throw new Error('Customer not found!');
   return customer;
 };
 
