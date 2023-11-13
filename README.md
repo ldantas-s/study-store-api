@@ -70,6 +70,7 @@ SALT_KEY=<This could be any uuid like -> '4963ad2b-acfa-42e9-a6a7-3337b197dbcc'>
 EMAIL_TMPL='<strong>{0}</strong>'
 MONGODB_URI=
 BREVO_KEY=
+NODE_ENV=[dev|test|production]
 ```
 
 - To generate the docs, run:
@@ -89,6 +90,9 @@ and after that you can have access of all endpoints using an API Client or acces
 ## Key Enhancements
 
 - **Documentation**: Comprehensive documentation has been added to elucidate the functionality and usage of various endpoints, providing clear guidance for developers and users. It's used [Swagger v3](https://swagger.io/docs/specification/about/) and [Swagger-autogen](https://github.com/swagger-autogen/swagger-autogen#swagger-autogen)
+
+- **Testing**: The project now includes a robust suite of tests to ensure the reliability and
+  correctness of the implemented features, following best practices in software testing.
 
 ## License
 
