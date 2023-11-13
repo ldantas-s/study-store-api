@@ -5,70 +5,121 @@ import * as EmailService from '../services/emailService.js';
 import * as AuthService from '../services/authService.js';
 import { createEncryptValue } from '../utils.js';
 
-export const getAll = (req, res) => {
+export const getCustomerData = async (req, res) => {
   /* 
   #swagger.tags = ['Customers']
   #swagger.security = [{
     "ApiKeyAuth": ''
   }]
   */
-  RepositoryCustomer.getAll()
-    .then((response) => res.status(200).json(response))
-    .catch((error) => res.status(400).json({ error }));
+  try {
+    const dataToken = await AuthService.decodeToken(AuthService.getToken(req));
+    const customer = await RepositoryCustomer.getById(dataToken.id);
+
+    res.status(200).json({ customer });
+  } catch (error) {
+    res.status(400).json({ error });
+  }
 };
 
-export const create = (req, res) => {
-  // #swagger.tags = ['Customers']
+export const create = async (req, res) => {
+  /*
+  #swagger.tags = ['Customers']
+  #swagger.requestBody = {
+    content: {
+      "application/json": {
+        schema: {
+          "type": "object",
+          "properties": {
+            "username": {
+              "example": "test"
+            },
+            "email": {
+              "example": "test@contact.com"
+            },
+            "password": {
+              "type": "string",
+              "example": "654321"
+            }
+          }
+        }  
+      },
+    }
+  }
+  */
 
   const contract = new ValidationContract();
 
-  contract.hasMinLen(
-    req.body.username,
-    3,
-    'It is necessary to have more then 3 characters!'
-  );
-  contract.isEmail(req.body.email, 'The email it is not valid!');
-  contract.hasMinLen(
-    req.body.password,
-    6,
-    'It is necessary to have more then 6 characters!'
-  );
+  contract.hasMinLen(req.body.username, 3, {
+    username: 'It is necessary to have more then 2 characters!',
+  });
+  contract.isEmail(req.body.email, { email: 'The email it is not valid!' });
+  contract.hasMinLen(req.body.password, 6, {
+    password: 'It is necessary to have more then 6 characters!',
+  });
   if (!contract.isValid()) {
-    res.status(400).json(contract.errors()).end();
+    res.status(404).json(contract.errors()).end();
     return;
   }
 
-  RepositoryCustomer.create({
-    ...req.body,
-    password: createEncryptValue(req.body.password),
-    roles: ['user'],
-  })
-    .then(() => {
-      EmailService.send(
-        { email: req.body.email, name: req.body.username },
-        'Welcome to the JLG',
-        process.env.EMAIL_TMPL.replace('{0}', req.body.username)
-      );
-
-      res.status(201).json({ message: 'Customer created with success!' });
-    })
-    .catch((error) => res.status(400).json({ error }));
+  try {
+    await RepositoryCustomer.create({
+      ...req.body,
+      password: createEncryptValue(req.body.password),
+      roles: ['user'],
+    });
+    // EmailService.send(
+    //   { email: req.body.email, name: req.body.username },
+    //   'Welcome to the JLG',
+    //   process.env.EMAIL_TMPL.replace('{0}', req.body.username)
+    // );
+    res.status(201).json({ message: 'Customer created with success!' });
+  } catch (error) {
+    res.status(404).json({ error });
+  }
 };
 
-export const login = (req, res) => {
+export const update = async (req, res) => {
+  /*
+  #swagger.tags = ['Customers']
+  #swagger.requestBody = {
+    content: {
+      "application/json": {
+        schema: {
+          "type": "object",
+          "properties": {
+            "username": {
+              "example": "new_username"
+            }
+          }
+        }  
+      },
+    }
+  }
+  */
+  const dataToken = await AuthService.decodeToken(AuthService.getToken(req));
+  try {
+    await RepositoryCustomer.updateCostumer(dataToken.id, req.body.username);
+    res.status(204).json({ message: 'Customer updated with success!' });
+  } catch (error) {
+    res.status(404).json(error);
+  }
+};
+
+export const login = async (req, res) => {
   /*
   #swagger.tags = ['Authentication']
   #swagger.requestBody = {
     content: {
       "application/json": {
         schema: {
-          type: "object",
+          "type": "object",
           "properties": {
             "email": {
               "example": "servo@contact.com"
             },
             "password": {
-              type: "string",
+              "type": "string",
               "example": "654321"
             }
           }
@@ -77,29 +128,26 @@ export const login = (req, res) => {
     }
   } 
   */
-  RepositoryCustomer.authenticate({
-    ...req.body,
-    password: createEncryptValue(req.body.password),
-  })
-    .then(async (customer) => {
-      if (!customer) {
-        res.status(404).json({ message: 'Email or password invalid!' });
-        return;
-      }
+  try {
+    const customer = await RepositoryCustomer.authenticate({
+      ...req.body,
+      password: createEncryptValue(req.body.password),
+    });
 
-      const token = await AuthService.generateToken({
-        id: customer._id,
-        email: customer.email,
-        name: customer.name,
-        roles: customer.roles,
-      });
+    const token = await AuthService.generateToken({
+      id: customer._id,
+      email: customer.email,
+      name: customer.name,
+      roles: customer.roles,
+    });
 
-      res.status(200).json({
-        token,
-        data: { email: customer.email, username: customer.username },
-      });
-    })
-    .catch((error) => res.statu(400).json({ error }));
+    res.status(200).json({
+      token,
+      data: { email: customer.email, username: customer.username },
+    });
+  } catch (error) {
+    res.status(400).json({ error });
+  }
 };
 
 export const refreshToken = async (req, res) => {
@@ -110,25 +158,24 @@ export const refreshToken = async (req, res) => {
   }]
   */
   const data = await AuthService.decodeToken(AuthService.getToken(req));
+  try {
+    const customer = await RepositoryCustomer.getById(data.id);
+    if (!customer) {
+      res.status(404).json({ message: 'Invalid Token!' });
+      return;
+    }
 
-  RepositoryCustomer.getById(data.id)
-    .then(async (customer) => {
-      if (!customer) {
-        res.status(404).json({ message: 'Email or password invalid!' });
-        return;
-      }
-
-      const token = await AuthService.generateToken({
-        id: customer._id,
-        email: customer.email,
-        name: customer.name,
-        roles: customer.roles,
-      });
-
-      res.status(200).json({
-        token,
-        data: { email: customer.email, username: customer.username },
-      });
-    })
-    .catch((error) => res.statu(400).json({ error }));
+    const token = await AuthService.generateToken({
+      id: customer._id,
+      email: customer.email,
+      name: customer.name,
+      roles: customer.roles,
+    });
+    res.status(200).json({
+      token,
+      data: { email: customer.email, username: customer.username },
+    });
+  } catch (error) {
+    res.statu(400).json({ error });
+  }
 };

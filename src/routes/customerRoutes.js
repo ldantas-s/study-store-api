@@ -5,8 +5,9 @@ import * as AuthService from '../services/authService.js';
 
 const customerRoutes = express.Router();
 
-customerRoutes.get('/', controller.getAll);
+customerRoutes.get('/', controller.getCustomerData);
 customerRoutes.post('/', controller.create);
+customerRoutes.put('/', AuthService.authorize, controller.update);
 customerRoutes.post('/login', controller.login);
 customerRoutes.post(
   '/refresh-token',

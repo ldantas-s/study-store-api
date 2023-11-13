@@ -1,7 +1,6 @@
 'use strict';
 import express from 'express';
 import swaggerUi from 'swagger-ui-express';
-import mongoose from 'mongoose';
 
 import 'dotenv/config.js';
 
@@ -27,13 +26,6 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   next();
 });
-
-mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-  })
-  .then(() => console.log('✅ Mongo connection with success.'))
-  .catch((error) => console.error(error));
 
 app.use('/v1', routesV1);
 

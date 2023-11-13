@@ -1,6 +1,4 @@
-import mongoose from 'mongoose';
-
-const Product = mongoose.model('Product');
+import { Product } from '../models';
 
 export const get = () => Product.find({ active: true }, 'title price slug');
 export const getBySlug = (slug) =>

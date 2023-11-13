@@ -2,3 +2,4 @@ SALT_KEY=
 EMAIL_TMPL='<strong>{0}</strong>'
 MONGODB_URI=
 BREVO_KEY=
+NODE_ENV=dev
