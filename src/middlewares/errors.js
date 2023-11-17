@@ -1,11 +1,13 @@
 export const logErrors = (error, req, res, next) => {
-  console.error(
-    JSON.stringify(
-      { ...error, message: error.message, stack: error.stack },
-      undefined,
-      ' '
-    )
-  );
+  if (process.env.NODE_ENV !== 'test') {
+    console.error(
+      JSON.stringify(
+        { ...error, message: error.message, stack: error.stack },
+        undefined,
+        ' '
+      )
+    );
+  }
   next(error);
 };
 

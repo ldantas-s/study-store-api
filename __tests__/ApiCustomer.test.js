@@ -34,7 +34,6 @@ describe('GET - /customers', () => {
     const getCustomerInfo = await requestApp
       .get('/v1/customers')
       .set('x-access-token', login.body.token || '');
-    console.log(login.body.token);
 
     expect(getCustomerInfo.status).toBe(200);
     expect(getCustomerInfo.body).toMatchObject({
@@ -144,44 +143,112 @@ describe('POST - /customers', () => {
   });
 });
 
-test('should be able to update the username or the password', async () => {
-  const creatingCustomer = await requestApp
-    .post('/v1/customers')
-    .send({ username: 'test', email: 'test@contact.com', password: '1234567' });
-  const login = await requestApp
-    .post('/v1/customers/login')
-    .send({ email: 'test@contact.com', password: '1234567' });
-  const updating = await requestApp
-    .put('/v1/customers')
-    .set('x-access-token', login.body.token || '')
-    .send({ username: 'newUsername' });
+describe('PUT - /customers', () => {
+  let login;
+  beforeAll(async () => {
+    await requestApp.post('/v1/customers').send({
+      username: 'test',
+      email: 'test@contact.com',
+      password: '1234567',
+    });
 
-  expect(updating.status).toBe(204);
-  await deleteCustomerTest('test@contact.com');
+    login = await requestApp
+      .post('/v1/customers/login')
+      .send({ email: 'test@contact.com', password: '1234567' });
+  });
+
+  afterAll(async () => {
+    await deleteCustomerTest('test@contact.com');
+  });
+
+  test('should be able to update the username or the password', async () => {
+    const updating = await requestApp
+      .put('/v1/customers')
+      .set('x-access-token', login.body.token || '')
+      .send({ username: 'newUsername' });
+
+    expect(updating.status).toBe(204);
+  });
+
+  test('should return a validation error when tries to update the username with invalid value', async () => {
+    const updating = await requestApp
+      .put('/v1/customers')
+      .set('x-access-token', login.body.token || '')
+      .send({ username: 'ne' });
+
+    expect(updating.status).toBe(400);
+    expect(updating.body).toMatchObject({
+      body: [{ username: 'It is necessary to have more then 2 characters!' }],
+      type: 'bad_request',
+      message: 'Please, check the invalid fields value',
+    });
+  });
+
+  test('should return an restrict access error when has not a token', async () => {
+    const updating = await requestApp
+      .put('/v1/customers')
+      .set('x-access-token', '')
+      .send({ username: 'newUsername' });
+
+    expect(updating.status).toBe(401);
+    expect(updating.body.message).toBe('Restrict Access!');
+  });
+
+  test('should return an invalid token error when has a invalid token', async () => {
+    const updating = await requestApp
+      .put('/v1/customers')
+      .set('x-access-token', 'bAs0S3DeH8h7koKow')
+      .send({ username: 'newUsername' });
+
+    expect(updating.status).toBe(401);
+    expect(updating.body.message).toBe('Invalid Token');
+  });
 });
 
-test('should return an error when fail to make login', async () => {
-  const login = await requestApp
-    .post('/v1/customers/login')
-    .send({ email: 'test@contact.com', password: '1234567' });
+describe('POST Authentication - /customers', () => {
+  beforeAll(async () => {
+    await requestApp.post('/v1/customers').send({
+      username: 'test',
+      email: 'test@contact.com',
+      password: '1234567',
+    });
+  });
 
-  expect(login.status).toBe(404);
-  expect(login.body.type).toBe('not_found');
-  expect(login.body.message).toBe('Email or password invalid');
-});
+  test('should return an error when fail to make login', async () => {
+    const login = await requestApp
+      .post('/v1/customers/login')
+      .send({ email: 'test@contact.com', password: '123456' });
 
-test('should return a restrict access error when does not exist a token to refresh', async () => {
-  const refreshToken = await requestApp.post('/v1/customers/refresh-token');
+    expect(login.status).toBe(404);
+    expect(login.body.type).toBe('not_found');
+    expect(login.body.message).toBe('Email or password invalid');
+  });
 
-  expect(refreshToken.status).toBe(401);
-  expect(refreshToken.body.message).toBe('Restrict Access!');
-});
+  test('should return a restrict access error when does not exist a token to refresh', async () => {
+    const refreshToken = await requestApp.post('/v1/customers/refresh-token');
 
-test('should return an invalid token when the token passed is invalid', async () => {
-  const refreshToken = await requestApp
-    .post('/v1/customers/refresh-token')
-    .set('x-access-token', 'bAs0S3DeH8h7koKow');
+    expect(refreshToken.status).toBe(401);
+    expect(refreshToken.body.message).toBe('Restrict Access!');
+  });
 
-  expect(refreshToken.status).toBe(401);
-  expect(refreshToken.body.message).toBe('Invalid Token');
+  test('should return an invalid token when the token passed is invalid', async () => {
+    const refreshToken = await requestApp
+      .post('/v1/customers/refresh-token')
+      .set('x-access-token', 'bAs0S3DeH8h7koKow');
+
+    expect(refreshToken.status).toBe(401);
+    expect(refreshToken.body.message).toBe('Invalid Token');
+  });
+
+  test('should refresh the token successfully and return a new valid token', async () => {
+    const login = await requestApp
+      .post('/v1/customers/login')
+      .send({ email: 'test@contact.com', password: '1234567' });
+    const refreshToken = await requestApp
+      .post('/v1/customers/refresh-token')
+      .set('x-access-token', login.body.token || '');
+
+    expect(refreshToken.status).toBe(200);
+    expect(refreshToken.body.token).not.toMatch(login.body.token);
+  });
 });

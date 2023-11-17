@@ -81,7 +81,7 @@ export const create = async (req, res, next) => {
   }
 };
 
-export const update = async (req, res) => {
+export const update = async (req, res, next) => {
   /*
   #swagger.tags = ['Customers']
   #swagger.requestBody = {
@@ -99,12 +99,22 @@ export const update = async (req, res) => {
     }
   }
   */
-  const dataToken = await AuthService.decodeToken(AuthService.getToken(req));
+  const contract = new ValidationContract();
+  contract.hasMinLen(req.body.username, 3, {
+    username: 'It is necessary to have more then 2 characters!',
+  });
   try {
+    if (!contract.isValid()) {
+      throw new BadRequestError(
+        'Please, check the invalid fields value',
+        contract.errors()
+      );
+    }
+    const dataToken = AuthService.decodeToken(AuthService.getToken(req));
     await RepositoryCustomer.updateCostumer(dataToken.id, req.body.username);
     res.status(204).json({ message: 'Customer updated with success!' });
   } catch (error) {
-    res.status(404).json(error);
+    next(error);
   }
 };
 
@@ -163,7 +173,7 @@ export const refreshToken = async (req, res, next) => {
     const data = AuthService.decodeToken(AuthService.getToken(req));
     const customer = await RepositoryCustomer.getById(data.id);
 
-    const token = await AuthService.generateToken({
+    const token = AuthService.generateToken({
       id: customer._id,
       email: customer.email,
       name: customer.name,
