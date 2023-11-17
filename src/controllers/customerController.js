@@ -4,6 +4,7 @@ import { RepositoryCustomer } from '../repositories/index.js';
 import * as EmailService from '../services/emailService.js';
 import * as AuthService from '../services/authService.js';
 import { createEncryptValue } from '../utils/encryptValue.js';
+import { BadRequestError } from '../utils/Errors/BadRequestError.js';
 
 export const getCustomerData = async (req, res, next) => {
   /* 
@@ -22,7 +23,7 @@ export const getCustomerData = async (req, res, next) => {
   }
 };
 
-export const create = async (req, res) => {
+export const create = async (req, res, next) => {
   /*
   #swagger.tags = ['Customers']
   #swagger.requestBody = {
@@ -47,7 +48,6 @@ export const create = async (req, res) => {
     }
   }
   */
-
   const contract = new ValidationContract();
 
   contract.hasMinLen(req.body.username, 3, {
@@ -58,7 +58,12 @@ export const create = async (req, res) => {
     password: 'It is necessary to have more then 6 characters!',
   });
   if (!contract.isValid()) {
-    res.status(404).json(contract.errors()).end();
+    next(
+      new BadRequestError(
+        'Please, check the invalid fields value',
+        contract.errors()
+      )
+    );
     return;
   }
 
@@ -75,7 +80,7 @@ export const create = async (req, res) => {
     // );
     res.status(201).json({ message: 'Customer created with success!' });
   } catch (error) {
-    res.status(404).json({ error });
+    next(error);
   }
 };
 

@@ -1,12 +1,14 @@
 import { BaseError } from './BaseError.js';
 import { STATUS_CODE } from '../httpStatus.js';
 
-export class TokenError extends BaseError {
+export class BadRequestError extends BaseError {
   constructor(
     message,
-    statusCode = STATUS_CODE.UNAUTHORIZED,
-    type = 'token_error'
+    body,
+    statusCode = STATUS_CODE.BAD_REQUEST,
+    type = 'bad_request'
   ) {
     super(message, statusCode, type);
+    this.body = body;
   }
 }

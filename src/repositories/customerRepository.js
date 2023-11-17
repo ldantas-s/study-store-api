@@ -1,9 +1,10 @@
 import { Customer } from '../models';
 import { NotFoundError } from '../utils/Errors/NotFoundError';
+import { ConflictError } from '../utils/Errors/ConflictError';
 
 export const getById = async (id) => {
   const customer = await Customer.findById(id, { username: 1, email: 1 });
-  if (!customer) throw new Error('Customer not found!');
+  if (!customer) throw new NotFoundError('Customer not found!');
   return customer;
 };
 
@@ -28,7 +29,7 @@ export const authenticate = async (data) => {
 
 export const create = async (data) => {
   const customerExist = await getByEmail(data.email);
-  if (customerExist?.email) throw new Error('Customer already exist');
+  if (customerExist?.email) throw new ConflictError('Customer already exists');
 
   const customer = new Customer(data);
   await customer.save();

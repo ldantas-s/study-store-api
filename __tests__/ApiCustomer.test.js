@@ -15,61 +15,133 @@ const deleteCustomerTest = async (email) => {
 
 const requestApp = request(app);
 
-test('should successful create a customer', async () => {
-  const res = await requestApp
-    .post('/v1/customers')
-    .send({ username: 'test', email: 'test@contact.com', password: '1234567' });
-
-  expect(res.status).toBe(201);
-  expect(res.body).toMatchObject({ message: 'Customer created with success!' });
-  await deleteCustomerTest('test@contact.com');
-});
-
-test('should return an error which is necessary more than 2 characters for username', async () => {
-  const res = await requestApp
-    .post('/v1/customers')
-    .send({ username: 'te', email: 'test@contact.com', password: '1234567' });
-
-  expect(res.status).toBe(404);
-  expect(res.body).toMatchObject([
-    { username: 'It is necessary to have more then 2 characters!' },
-  ]);
-});
-
-test('should return an error which is necessary more than 6 characters for password', async () => {
-  const res = await requestApp
-    .post('/v1/customers')
-    .send({ username: 'test', email: 'test@contact.com', password: '123456' });
-
-  expect(res.status).toBe(404);
-  expect(res.body).toMatchObject([
-    { password: 'It is necessary to have more then 6 characters!' },
-  ]);
-});
-
-test('should return an error which is necessary hava a valid format email', async () => {
-  const res = await requestApp
-    .post('/v1/customers')
-    .send({ username: 'test', email: 'test@contact.c', password: '1234567' });
-
-  expect(res.status).toBe(404);
-  expect(res.body).toMatchObject([{ email: 'The email it is not valid!' }]);
-});
-
-test('should return an error when try to create a customer with a email existent', async () => {
-  const res1 = await requestApp.post('/v1/customers').send({
-    username: 'test',
-    email: 'test@contact.com',
-    password: '1234567',
+describe('GET - /customers', () => {
+  beforeAll(async () => {
+    await requestApp.post('/v1/customers').send({
+      username: 'test',
+      email: 'test@contact.com',
+      password: '1234567',
+    });
   });
-  const res2 = await requestApp.post('/v1/customers').send({
-    username: 'test',
-    email: 'test@contact.com',
-    password: '1234567',
+  afterAll(async () => {
+    await deleteCustomerTest('test@contact.com');
   });
 
-  expect(res2.status).toBe(404);
-  await deleteCustomerTest('test@contact.com');
+  test('should return the username and email of logged customer', async () => {
+    const login = await requestApp
+      .post('/v1/customers/login')
+      .send({ email: 'test@contact.com', password: '1234567' });
+    const getCustomerInfo = await requestApp
+      .get('/v1/customers')
+      .set('x-access-token', login.body.token || '');
+    console.log(login.body.token);
+
+    expect(getCustomerInfo.status).toBe(200);
+    expect(getCustomerInfo.body).toMatchObject({
+      customer: {
+        username: 'test',
+        email: 'test@contact.com',
+      },
+    });
+  });
+
+  test('should return a restrict access when it try to access without token', async () => {
+    const getCustomerInfo = await requestApp
+      .get('/v1/customers')
+      .set('x-access-token', '');
+
+    expect(getCustomerInfo.body.message).toBe('Restrict Access!');
+    expect(getCustomerInfo.status).toBe(401);
+  });
+});
+
+describe('POST - /customers', () => {
+  afterAll(async () => {
+    await deleteCustomerTest('test@contact.com');
+  });
+
+  test('should successful create a customer', async () => {
+    const res = await requestApp.post('/v1/customers').send({
+      username: 'test',
+      email: 'test@contact.com',
+      password: '1234567',
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      message: 'Customer created with success!',
+    });
+  });
+
+  test('should return an error which is necessary more than 2 characters for username', async () => {
+    const res = await requestApp
+      .post('/v1/customers')
+      .send({ username: 'te', email: 'test@contact.com', password: '1234567' });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      body: [{ username: 'It is necessary to have more then 2 characters!' }],
+      type: 'bad_request',
+      message: 'Please, check the invalid fields value',
+    });
+  });
+
+  test('should return an error which is necessary more than 6 characters for password', async () => {
+    const res = await requestApp.post('/v1/customers').send({
+      username: 'test',
+      email: 'test@contact.com',
+      password: '123456',
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      body: [{ password: 'It is necessary to have more then 6 characters!' }],
+      type: 'bad_request',
+      message: 'Please, check the invalid fields value',
+    });
+  });
+
+  test('should return an error which is necessary hava a valid format email', async () => {
+    const res = await requestApp
+      .post('/v1/customers')
+      .send({ username: 'test', email: 'test@contact.c', password: '1234567' });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      body: [{ email: 'The email it is not valid!' }],
+      type: 'bad_request',
+      message: 'Please, check the invalid fields value',
+    });
+  });
+
+  test('should return an error for both password and email invalid', async () => {
+    const res = await requestApp.post('/v1/customers').send({
+      username: 'test',
+      email: 'test@contact.c',
+      password: '123456',
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      body: [
+        { email: 'The email it is not valid!' },
+        { password: 'It is necessary to have more then 6 characters!' },
+      ],
+      type: 'bad_request',
+      message: 'Please, check the invalid fields value',
+    });
+  });
+
+  test('should return an error when try to create a customer with a email existent', async () => {
+    const res2 = await requestApp.post('/v1/customers').send({
+      username: 'test',
+      email: 'test@contact.com',
+      password: '1234567',
+    });
+
+    expect(res2.status).toBe(409);
+    expect(res2.body.message).toBe('Customer already exists');
+  });
 });
 
 test('should be able to update the username or the password', async () => {
@@ -85,27 +157,6 @@ test('should be able to update the username or the password', async () => {
     .send({ username: 'newUsername' });
 
   expect(updating.status).toBe(204);
-  await deleteCustomerTest('test@contact.com');
-});
-
-test('should return the username and email of logged customer', async () => {
-  await requestApp
-    .post('/v1/customers')
-    .send({ username: 'test', email: 'test@contact.com', password: '1234567' });
-  const login = await requestApp
-    .post('/v1/customers/login')
-    .send({ email: 'test@contact.com', password: '1234567' });
-  const getCustomerInfo = await requestApp
-    .get('/v1/customers')
-    .set('x-access-token', login.body.token || '');
-
-  expect(getCustomerInfo.status).toBe(200);
-  expect(getCustomerInfo.body).toMatchObject({
-    customer: {
-      username: 'test',
-      email: 'test@contact.com',
-    },
-  });
   await deleteCustomerTest('test@contact.com');
 });
 
