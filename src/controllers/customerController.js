@@ -57,17 +57,14 @@ export const create = async (req, res, next) => {
   contract.hasMinLen(req.body.password, 6, {
     password: 'It is necessary to have more then 6 characters!',
   });
-  if (!contract.isValid()) {
-    next(
-      new BadRequestError(
-        'Please, check the invalid fields value',
-        contract.errors()
-      )
-    );
-    return;
-  }
 
   try {
+    if (!contract.isValid()) {
+      throw new BadRequestError(
+        'Please, check the invalid fields value',
+        contract.errors()
+      );
+    }
     await RepositoryCustomer.create({
       ...req.body,
       password: createEncryptValue(req.body.password),
