@@ -6,4 +6,7 @@ export class BaseError extends Error {
     this.statusCode = statusCode;
     Error.captureStackTrace(this);
   }
+  serialize() {
+    return { type: this.type, message: this.message };
+  }
 }

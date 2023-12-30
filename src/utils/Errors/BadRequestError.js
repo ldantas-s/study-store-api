@@ -11,4 +11,7 @@ export class BadRequestError extends BaseError {
     super(message, statusCode, type);
     this.body = body;
   }
+  serialize() {
+    return { type: this.type, message: this.message, body: this.body };
+  }
 }

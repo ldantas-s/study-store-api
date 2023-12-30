@@ -12,7 +12,5 @@ export const logErrors = (error, req, res, next) => {
 };
 
 export const handleErrors = (error, req, res, next) => {
-  res
-    .status(error.statusCode)
-    .json({ type: error.type, message: error.message, body: error.body });
+  res.status(error.statusCode).json(error.serialize());
 };
